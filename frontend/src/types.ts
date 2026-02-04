@@ -20,7 +20,8 @@ export interface ExtractedRecord {
   document_id: number;
   field_name: string;
   value: string | null;
-  confidence: number | null;
+  ai_value: string | null;
+  ai_confidence: number | null;
   citation: string | null;
   normalization: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'manual_updated';

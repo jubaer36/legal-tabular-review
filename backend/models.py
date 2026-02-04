@@ -39,8 +39,14 @@ class ExtractedRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     document_id: int = Field(foreign_key="document.id")
     field_name: str
+
+    # Current Value (Editable)
     value: Optional[str] = None
-    confidence: Optional[float] = None
+
+    # Original AI Value (Audit Trail)
+    ai_value: Optional[str] = None
+    ai_confidence: Optional[float] = None
+
     citation: Optional[str] = None
     normalization: Optional[str] = None
     status: str = Field(default="pending") # pending, approved, rejected, manual_updated

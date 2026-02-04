@@ -51,3 +51,20 @@ export const getRecords = async (docId: number) => {
   const response = await api.get<ExtractedRecord[]>(`/documents/${docId}/records`);
   return response.data;
 };
+
+export const updateRecord = async (recordId: number, value: string, status: string) => {
+    const response = await api.put<ExtractedRecord>(`/records/${recordId}`, { value, status });
+    return response.data;
+};
+
+export interface EvaluationStats {
+    total_fields: number;
+    reviewed_fields: number;
+    correct_fields: number;
+    accuracy: number;
+}
+
+export const getEvaluation = async (projectId: number) => {
+    const response = await api.get<EvaluationStats>(`/projects/${projectId}/evaluation`);
+    return response.data;
+};

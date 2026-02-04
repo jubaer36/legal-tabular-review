@@ -57,8 +57,15 @@ export const ProjectDetail: React.FC = () => {
 
   return (
     <div>
-      <Link to="/">Back to Projects</Link>
-      <h2>{project.name}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Link to="/">Back to Projects</Link>
+            <h2>{project.name}</h2>
+          </div>
+          <Link to={`/projects/${project.id}/evaluation`} className="button-link" style={{ background: '#9b59b6', color: 'white', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none' }}>
+            View Evaluation Report
+          </Link>
+      </div>
       <p>{project.description}</p>
 
       <div className="card">

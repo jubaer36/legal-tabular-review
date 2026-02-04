@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { ProjectList } from './pages/ProjectList';
 import { ProjectDetail } from './pages/ProjectDetail';
-import { DocumentReview } from './pages/DocumentReview'; // Will create this next
+import { DocumentReview } from './pages/DocumentReview';
+import { EvaluationReport } from './pages/EvaluationReport';
 import './App.css';
 
 // Placeholder for DocumentReview until created
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<ProjectList />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/projects/:id/evaluation" element={<EvaluationReport />} />
           <Route path="/documents/:id" element={<DocumentReview />} />
         </Routes>
       </main>

@@ -36,6 +36,8 @@ def test_extraction_plumbing():
 
             assert len(records) == 1
             assert records[0]["value"] == "Mock Agreement"
+            assert records[0]["ai_value"] == "Mock Agreement"
+            assert records[0]["ai_confidence"] == 0.99
             assert records[0]["status"] == "pending"
 
             # 3. Get Records

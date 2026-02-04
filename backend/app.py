@@ -125,7 +125,8 @@ def extract_document(document_id: int, session: Session = Depends(get_session)):
             document_id=document_id,
             field_name=res.get("field_name"),
             value=res.get("value"),
-            confidence=res.get("confidence"),
+            ai_value=res.get("value"),
+            ai_confidence=res.get("confidence"),
             citation=res.get("citation"),
             normalization=res.get("normalization"),
             status="pending"
@@ -148,3 +149,51 @@ def get_records(document_id: int, session: Session = Depends(get_session)):
     statement = select(ExtractedRecord).where(ExtractedRecord.document_id == document_id)
     records = session.exec(statement).all()
     return records
+
+# Record Updates (Manual Review)
+class RecordUpdate(BaseModel):
+    value: Optional[str]
+    status: str
+
+@app.put("/records/{record_id}", response_model=ExtractedRecord)
+def update_record(record_id: int, update: RecordUpdate, session: Session = Depends(get_session)):
+    record = session.get(ExtractedRecord, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    record.value = update.value
+    record.status = update.status
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return record
+
+# Evaluation
+@app.get("/projects/{project_id}/evaluation")
+def get_project_evaluation(project_id: int, session: Session = Depends(get_session)):
+    # Get all documents for project
+    docs = session.exec(select(Document).where(Document.project_id == project_id)).all()
+
+    total_fields = 0
+    reviewed_fields = 0
+    correct_fields = 0
+
+    for doc in docs:
+        records = session.exec(select(ExtractedRecord).where(ExtractedRecord.document_id == doc.id)).all()
+        for rec in records:
+            total_fields += 1
+            if rec.status != "pending":
+                reviewed_fields += 1
+                # If value matches AI value (and neither is None, or both None)
+                # Normalization should be considered? For now strict string match on value
+                if rec.value == rec.ai_value:
+                    correct_fields += 1
+
+    accuracy = (correct_fields / reviewed_fields * 100) if reviewed_fields > 0 else 0
+
+    return {
+        "total_fields": total_fields,
+        "reviewed_fields": reviewed_fields,
+        "accuracy": round(accuracy, 2),
+        "correct_fields": correct_fields
+    }
