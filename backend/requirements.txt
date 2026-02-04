@@ -1,2 +1,9 @@
 fastapi
 uvicorn
+sqlmodel
+pypdf
+beautifulsoup4
+groq
+python-dotenv
+python-multipart
+requests
