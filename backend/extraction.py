@@ -55,16 +55,39 @@ def generate_extraction_prompt(text: str, fields: List[Dict[str, str]]) -> str:
     # but acceptable for a "vertical slice" demo.
     return prompt
 
-def extract_data_from_text(text: str, fields: List[Dict[str, str]] = DEFAULT_FIELDS) -> List[Dict[str, Any]]:
+from vector_store import query_document
+
+def extract_data_from_text(text: str, fields: List[Dict[str, str]] = DEFAULT_FIELDS, document_id: int = None) -> List[Dict[str, Any]]:
     client = get_groq_client()
     if not client:
         raise ValueError("GROQ_API_KEY not set in environment variables")
 
-    prompt = generate_extraction_prompt(text, fields)
+    # context_text = text[:20000] # Default fallback
+
+    if document_id:
+        # Construct a query from fields
+        query_parts = [f"{f['name']}: {f['description']}" for f in fields]
+        query_text = "Find details about: " + ", ".join(query_parts)
+        
+        # Retrieve relevant chunks
+        try:
+            chunks = query_document(document_id, query_text, n_results=10) # Get top 10 chunks
+            if chunks:
+                print(f"Using {len(chunks)} chunks from vector store for context.")
+                context_text = "\n---\n".join(chunks)
+            else:
+                 context_text = text[:20000]
+        except Exception as e:
+             print(f"Vector retrieval failed: {e}")
+             context_text = text[:20000]
+    else:
+        context_text = text[:20000]
+
+    prompt = generate_extraction_prompt(context_text, fields)
 
     try:
         completion = client.chat.completions.create(
-            model="llama3-70b-8192", # Strong model for extraction
+            model="llama-3.3-70b-versatile", # Strong model for extraction
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that outputs JSON."},
                 {"role": "user", "content": prompt}

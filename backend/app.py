@@ -8,6 +8,7 @@ from models import Project, Document, ExtractedRecord, ExtractionSchema
 from parsers import parse_document
 from extraction import extract_data_from_text
 from pydantic import BaseModel
+from vector_store import process_and_store_document
 
 app = FastAPI(title="Legal Tabular Review API")
 
@@ -85,6 +86,13 @@ def ingest_document(project_id: int, request: IngestRequest, session: Session = 
     session.add(doc)
     session.commit()
     session.refresh(doc)
+
+    # Ingest into Vector Store
+    try:
+        process_and_store_document(doc.id, doc.content)
+    except Exception as e:
+        print(f"Vector store ingestion failed: {e}")
+
     return doc
 
 @app.get("/projects/{project_id}/documents", response_model=List[Document])
@@ -115,7 +123,7 @@ def extract_document(document_id: int, session: Session = Depends(get_session)):
         session.delete(rec)
 
     try:
-        results = extract_data_from_text(doc.content)
+        results = extract_data_from_text(doc.content, document_id=doc.id)
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
