@@ -22,7 +22,7 @@ export const EvaluationReport: React.FC = () => {
             <h2>Evaluation Report: {project.name}</h2>
 
             <div className="card">
-                <h3>Metrics</h3>
+                <h3>Overall Metrics</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                     <div style={{ textAlign: 'center', background: '#e3f2fd', padding: '20px', borderRadius: '8px' }}>
                         <div style={{ fontSize: '2.5em', fontWeight: 'bold', color: '#1565c0' }}>{stats.accuracy}%</div>
@@ -37,6 +37,40 @@ export const EvaluationReport: React.FC = () => {
                         <div>Correct Fields (Match AI)</div>
                     </div>
                 </div>
+            </div>
+
+            <div className="card">
+                <h3>Field Accuracy Breakdown</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field Name</th>
+                            <th>Accuracy</th>
+                            <th>Reviewed / Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {stats.field_breakdown && stats.field_breakdown.map(f => (
+                            <tr key={f.field_name}>
+                                <td>{f.field_name}</td>
+                                <td>
+                                    <strong>{f.accuracy}%</strong>
+                                    <div style={{ width: '100px', height: '6px', background: '#eee', marginTop: '5px', borderRadius: '3px' }}>
+                                        <div style={{ width: `${f.accuracy}%`, height: '100%', background: f.accuracy > 80 ? '#2ecc71' : f.accuracy > 50 ? '#f1c40f' : '#e74c3c', borderRadius: '3px' }}></div>
+                                    </div>
+                                </td>
+                                <td>{f.reviewed} / {f.total}</td>
+                                <td>
+                                    {f.reviewed === 0 ? <span style={{ color: '#999' }}>No Data</span> :
+                                     f.accuracy < 50 ? <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Needs Attention</span> :
+                                     f.accuracy > 90 ? <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>Excellent</span> :
+                                     'Good'}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             <div className="card">

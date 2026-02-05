@@ -3,6 +3,7 @@ import { ProjectList } from './pages/ProjectList';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { DocumentReview } from './pages/DocumentReview';
 import { EvaluationReport } from './pages/EvaluationReport';
+import { ProjectSettings } from './pages/ProjectSettings';
 import './App.css';
 
 // Placeholder for DocumentReview until created
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<ProjectList />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/projects/:id/settings" element={<ProjectSettings />} />
           <Route path="/projects/:id/evaluation" element={<EvaluationReport />} />
           <Route path="/documents/:id" element={<DocumentReview />} />
         </Routes>

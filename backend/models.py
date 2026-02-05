@@ -9,6 +9,7 @@ class Project(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     documents: List["Document"] = Relationship(back_populates="project")
+    schema_fields: List["ExtractionSchema"] = Relationship(back_populates="project")
 
 class Document(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -30,10 +31,7 @@ class ExtractionSchema(SQLModel, table=True):
     field_description: str
     data_type: str = Field(default="string") # string, number, date
 
-    # We might want to link this to Project more directly later,
-    # but for now let's assume one schema per project or just global.
-    # Actually, the requirements say "Field Template & Schema Management".
-    # Let's keep it simple: A project has many schema definitions.
+    project: Optional[Project] = Relationship(back_populates="schema_fields")
 
 class ExtractedRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

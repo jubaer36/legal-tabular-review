@@ -62,9 +62,14 @@ export const ProjectDetail: React.FC = () => {
             <Link to="/">Back to Projects</Link>
             <h2>{project.name}</h2>
           </div>
-          <Link to={`/projects/${project.id}/evaluation`} className="button-link" style={{ background: '#9b59b6', color: 'white', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none' }}>
-            View Evaluation Report
-          </Link>
+          <div>
+            <Link to={`/projects/${project.id}/settings`} className="button-link" style={{ background: '#7f8c8d', color: 'white', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none', marginRight: '10px' }}>
+                Schema Settings
+            </Link>
+            <Link to={`/projects/${project.id}/evaluation`} className="button-link" style={{ background: '#9b59b6', color: 'white', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none' }}>
+                View Evaluation Report
+            </Link>
+          </div>
       </div>
       <p>{project.description}</p>
 

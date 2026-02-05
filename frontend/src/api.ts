@@ -57,14 +57,44 @@ export const updateRecord = async (recordId: number, value: string, status: stri
     return response.data;
 };
 
+export interface FieldBreakdown {
+    field_name: string;
+    accuracy: number;
+    reviewed: number;
+    total: number;
+}
+
 export interface EvaluationStats {
     total_fields: number;
     reviewed_fields: number;
     correct_fields: number;
     accuracy: number;
+    field_breakdown: FieldBreakdown[];
 }
 
 export const getEvaluation = async (projectId: number) => {
     const response = await api.get<EvaluationStats>(`/projects/${projectId}/evaluation`);
     return response.data;
+};
+
+export interface ExtractionSchema {
+    id: number;
+    project_id: number;
+    field_name: string;
+    field_description: string;
+    data_type: string;
+}
+
+export const getProjectSchema = async (projectId: number) => {
+    const response = await api.get<ExtractionSchema[]>(`/projects/${projectId}/schema`);
+    return response.data;
+};
+
+export const addSchemaField = async (projectId: number, field: Omit<ExtractionSchema, 'id' | 'project_id'>) => {
+    const response = await api.post<ExtractionSchema>(`/projects/${projectId}/schema`, field);
+    return response.data;
+};
+
+export const deleteSchemaField = async (projectId: number, fieldId: number) => {
+    await api.delete(`/projects/${projectId}/schema/${fieldId}`);
 };

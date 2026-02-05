@@ -49,6 +49,39 @@ def get_project(project_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
+# Schema Management
+@app.post("/projects/{project_id}/schema", response_model=ExtractionSchema)
+def add_schema_field(project_id: int, field: ExtractionSchema, session: Session = Depends(get_session)):
+    # Ensure project exists
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Overwrite project_id in case it's missing or wrong in payload
+    field.project_id = project_id
+    session.add(field)
+    session.commit()
+    session.refresh(field)
+    return field
+
+@app.get("/projects/{project_id}/schema", response_model=List[ExtractionSchema])
+def get_project_schema(project_id: int, session: Session = Depends(get_session)):
+    statement = select(ExtractionSchema).where(ExtractionSchema.project_id == project_id)
+    fields = session.exec(statement).all()
+    return fields
+
+@app.delete("/projects/{project_id}/schema/{field_id}")
+def delete_schema_field(project_id: int, field_id: int, session: Session = Depends(get_session)):
+    field = session.get(ExtractionSchema, field_id)
+    if not field:
+        raise HTTPException(status_code=404, detail="Field not found")
+    if field.project_id != project_id:
+        raise HTTPException(status_code=400, detail="Field does not belong to this project")
+
+    session.delete(field)
+    session.commit()
+    return {"status": "deleted"}
+
 # Ingestion
 class IngestRequest(BaseModel):
     filename: str
@@ -114,8 +147,20 @@ def extract_document(document_id: int, session: Session = Depends(get_session)):
     for rec in old_records:
         session.delete(rec)
 
+    # Fetch Project Schema
+    schema = session.exec(select(ExtractionSchema).where(ExtractionSchema.project_id == doc.project_id)).all()
+
+    if schema:
+        # Map schema to the format expected by extraction.py
+        fields_to_extract = [{"name": s.field_name, "description": s.field_description} for s in schema]
+    else:
+        # Fallback to default fields (or we could enforce schema creation)
+        # Using import inside function to avoid circular or just rely on default argument in extraction.py
+        from extraction import DEFAULT_FIELDS
+        fields_to_extract = DEFAULT_FIELDS
+
     try:
-        results = extract_data_from_text(doc.content)
+        results = extract_data_from_text(doc.content, fields=fields_to_extract)
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -191,9 +236,38 @@ def get_project_evaluation(project_id: int, session: Session = Depends(get_sessi
 
     accuracy = (correct_fields / reviewed_fields * 100) if reviewed_fields > 0 else 0
 
+    # Calculate breakdown per field
+    field_stats = {}
+
+    for doc in docs:
+        records = session.exec(select(ExtractedRecord).where(ExtractedRecord.document_id == doc.id)).all()
+        for rec in records:
+            if rec.field_name not in field_stats:
+                field_stats[rec.field_name] = {"total": 0, "reviewed": 0, "correct": 0}
+
+            stats = field_stats[rec.field_name]
+            stats["total"] += 1
+
+            if rec.status != "pending":
+                stats["reviewed"] += 1
+                if rec.value == rec.ai_value:
+                    stats["correct"] += 1
+
+    # Format breakdown list
+    breakdown = []
+    for name, stats in field_stats.items():
+        acc = (stats["correct"] / stats["reviewed"] * 100) if stats["reviewed"] > 0 else 0
+        breakdown.append({
+            "field_name": name,
+            "accuracy": round(acc, 2),
+            "reviewed": stats["reviewed"],
+            "total": stats["total"]
+        })
+
     return {
         "total_fields": total_fields,
         "reviewed_fields": reviewed_fields,
         "accuracy": round(accuracy, 2),
-        "correct_fields": correct_fields
+        "correct_fields": correct_fields,
+        "field_breakdown": breakdown
     }
